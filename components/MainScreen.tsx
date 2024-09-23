@@ -26,7 +26,7 @@ const services = [
 
 const MainPage = () => {
   return (
-    <div className="flex flex-col items-center justify-center p-10 bg-gradient-to-b from-gray-200 to-gray-400 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+    <div className="flex flex-col items-center justify-center p-10 bg-blue-100 dark:bg-gray-900 min-h-screen">
       <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold text-gray-800 dark:text-white flex items-center justify-center">
           🚀 AI Code Productivity Booster <span className="ml-2">🛠️</span>
