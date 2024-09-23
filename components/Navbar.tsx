@@ -16,12 +16,10 @@ const Navbar = () => {
   const toggleMenu = () => setIsOpen(!isOpen);
   const toggleServices = () => setIsServicesOpen(!isServicesOpen);
 
-  // This function toggles dark mode
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  // Apply or remove the 'dark' class from the root element when the theme changes
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
