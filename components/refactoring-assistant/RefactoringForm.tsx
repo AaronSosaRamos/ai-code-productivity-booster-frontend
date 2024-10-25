@@ -1,20 +1,38 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { refactorSchema, RefactorFormValues } from "../schemas/RefactorSchema";
+import { Suspense, useState } from "react";
 import { motion } from "framer-motion";
-import { ToastContainer, toast } from "react-toastify";
 import { FiSend, FiLoader } from "react-icons/fi";
 import { BiCodeAlt, BiCommentDetail } from "react-icons/bi";
+import { useForm } from "react-hook-form";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import CircularSpinner from "../Spinner";
+import CodeRefactorResults from "./CodeAnalysisResults";
 
-export default function RefactoringForm() {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RefactorFormValues>({
-    resolver: zodResolver(refactorSchema),
+function fetchRefactorData(data: any) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        code_snippet: `def quicksort(arr):\n    if len(arr) <= 1:\n        return arr  # Corrected to handle empty arrays as well\n    pivot = arr[0]\n    left = [x for x in arr[1:] if x < pivot]  # Corrected logic and used list comprehension\n    right = [x for x in arr[1:] if x >= pivot]  # Corrected logic and used list comprehension\n    return quicksort(left) + [pivot] + quicksort(right)\n\narr = [3, 6, 8, 10, 1, 2, 1]\nsorted_arr = quicksort(arr)\nprint(sorted_arr)`,
+
+        changes_made: {
+          "1": "Added a check for an empty array at the beginning of the function to prevent potential crashes.",
+          "2": "Corrected the pivot selection and appending logic to ensure elements are correctly added to the left and right lists.",
+          "3": "Used list comprehensions to improve code readability and efficiency."
+        },
+        new_dependencies: null
+      });
+    }, 2000);
   });
+}
 
-  const onSubmit = (data: RefactorFormValues) => {
-    toast.success("Code submitted for refactoring");
-    console.log(data);
+export default function RefactorAssistant() {
+  const [refactorData, setRefactorData] = useState<any | null>(null);
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm();
+
+  const onSubmit = async (data: any) => {
+    toast.info("Processing refactoring...");
+    const result = await fetchRefactorData(data);
+    setRefactorData(result);
   };
 
   return (
@@ -41,7 +59,9 @@ export default function RefactoringForm() {
               rows={6}
               placeholder="Insert code here..."
             ></textarea>
-            {errors.code_snippet && <p className="text-red-500 text-sm mt-1">{errors.code_snippet.message}</p>}
+            {errors.code_snippet && typeof errors.code_snippet.message === "string" && (
+              <p className="text-red-500 text-sm mt-1">{errors.code_snippet.message}</p>
+            )}
           </div>
 
           <div>
@@ -70,7 +90,9 @@ export default function RefactoringForm() {
               rows={4}
               placeholder="Add additional context..."
             ></textarea>
-            {errors.context && <p className="text-red-500 text-sm mt-1">{errors.context.message}</p>}
+            {errors.context && typeof errors.context.message === "string" && (
+              <p className="text-red-500 text-sm mt-1">{errors.context.message}</p>
+            )}
           </div>
 
           <motion.button
@@ -88,8 +110,14 @@ export default function RefactoringForm() {
             {isSubmitting ? "Processing..." : "Submit"}
           </motion.button>
         </form>
-        
+
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+
+        {refactorData && (
+          <Suspense fallback={<CircularSpinner />}>
+            <CodeRefactorResults data={refactorData} />
+          </Suspense>
+        )}
       </motion.div>
     </motion.div>
   );
