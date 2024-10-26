@@ -7,6 +7,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CircularSpinner from "../Spinner";
 import CodeRefactorResults from "./CodeAnalysisResults";
+import { FaCogs } from "react-icons/fa";
 
 function fetchRefactorData(data: any) {
   return new Promise((resolve) => {
@@ -42,12 +43,15 @@ export default function RefactorAssistant() {
       transition={{ duration: 0.5 }}
       className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors"
     >
-      <motion.div 
+      <motion.div
         className="w-full max-w-lg bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-all"
         whileHover={{ scale: 1.02 }}
       >
-        <h2 className="text-2xl font-bold mb-4 text-black dark:text-white">Refactoring Assistant</h2>
-        
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <FaCogs className="text-3xl text-blue-600 dark:text-blue-400" />
+          <h2 className="text-2xl font-bold text-black dark:text-white">Refactoring Assistant</h2>
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="flex items-center gap-2 text-black dark:text-white">
