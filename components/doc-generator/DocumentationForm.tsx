@@ -1,80 +1,33 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { documentationSchema, DocumentationFormValues } from "@/schemas/DocumentationSchema";
+import { Suspense, useState } from "react";
 import { motion } from "framer-motion";
-import { ToastContainer, toast } from "react-toastify";
 import { FiSend, FiLoader } from "react-icons/fi";
 import { BiBookOpen, BiCodeAlt, BiCommentDetail } from "react-icons/bi";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { documentationSchema, DocumentationFormValues } from "@/schemas/DocumentationSchema";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useState, Suspense } from "react";
-import DocumentationResult from "./DocumentationResult";
 import CircularSpinner from "../Spinner";
+import DocumentationResult from "./DocumentationResult";
+import axios from "axios";
 
-function fetchDocumentation(data: DocumentationFormValues) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        documentation: `This documentation provides a comprehensive guide to implementing a Convolutional Neural Network (CNN) architecture using the MNIST dataset. The following sections detail the various components and functions used in the implementation, along with example code snippets to illustrate their usage.\n
-1. **get_data_loaders**
-   - **Description**: This function is responsible for loading the MNIST dataset and preparing the data loaders for training and validation.
-   - **Example**:
-     \`\`\`python
-     train_loader, val_loader = get_data_loaders(batch_size=32)
-     \`\`\`
-   
-2. **CNN**
-   - **Description**: This class defines the CNN architecture used for classifying the MNIST dataset.
-   - **Example**:
-     \`\`\`python
-     model = CNN()
-     \`\`\`
-   
-3. **forward**
-   - **Description**: This method performs the forward pass of the CNN model.
-   - **Example**:
-     \`\`\`python
-     output = model.forward(input_tensor)
-     \`\`\`
-   
-4. **train_model**
-   - **Description**: This function trains the CNN model using the training data loader and evaluates it on the validation data loader.
-   - **Example**:
-     \`\`\`python
-     train_model(model, train_loader, val_loader, num_epochs=5, learning_rate=0.01)
-     \`\`\`
-   
-5. **evaluate_model**
-   - **Description**: This function evaluates the trained model on the validation dataset and returns the accuracy.
-   - **Example**:
-     \`\`\`python
-     accuracy = evaluate_model(model, val_loader)
-     \`\`\`
-   
-6. **test_model**
-   - **Description**: This function tests the trained model on a separate test dataset and returns the test accuracy.
-   - **Example**:
-     \`\`\`python
-     test_accuracy = test_model(model, test_loader)
-     \`\`\`
-   
-7. **plot_loss_curves**
-   - **Description**: This function plots the training and validation loss curves to visualize the model's performance over epochs.
-   - **Example**:
-     \`\`\`python
-     plot_loss_curves(train_loss, val_loss)
-     \`\`\`
-   
-8. **main**
-   - **Description**: This function serves as the entry point for the program, orchestrating the data loading, model training, evaluation, and testing processes.
-   - **Example**:
-     \`\`\`python
-     main()
-     \`\`\`
-   
-This documentation provides a structured approach to implementing a CNN for the MNIST dataset, ensuring clarity and ease of understanding for users looking to replicate or build upon this work.`
-      });
-    }, 2000);
-  });
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    "api-key": process.env.NEXT_PUBLIC_API_KEY,
+  },
+});
+
+async function fetchDocumentation(data: DocumentationFormValues): Promise<any> {
+  try {
+    const response = await axiosInstance.post<any>("/doc-generator-assistant", data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching documentation:", error);
+    toast.error("Error generating documentation. Please try again.");
+    return null;
+  }
 }
 
 export default function DocumentationForm() {
@@ -84,10 +37,10 @@ export default function DocumentationForm() {
 
   const [documentationData, setDocumentationData] = useState<any | null>(null);
 
-  const onSubmit = async (data: DocumentationFormValues) => {
+  const onSubmit: SubmitHandler<DocumentationFormValues> = async (data) => {
     toast.info("Generating documentation...");
     const result = await fetchDocumentation(data);
-    setDocumentationData(result);
+    if (result) setDocumentationData(result);
   };
 
   return (
