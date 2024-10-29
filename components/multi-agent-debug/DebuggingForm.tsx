@@ -1,5 +1,5 @@
 import { useState, Suspense } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { debuggingSchema, DebuggingFormValues } from "@/schemas/DebuggingSchema";
 import { motion } from "framer-motion";
@@ -10,29 +10,25 @@ import { FaBug } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import DebuggingResult from "./DebuggingResult";
 import CircularSpinner from "../Spinner";
+import axios from "axios";
 
-function fetchDebuggingData(data: DebuggingFormValues) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                code_snippet: `def quicksort(arr):\n    if len(arr) == 0 or len(arr) == 1:\n        return arr\n    pivot = arr[0]\n    left = []\n    right = []\n    for i in arr[1:]:\n        if i < pivot:\n            left.append(i)\n        else:\n            right.append(i)\n    return quicksort(left) + [pivot] + quicksort(right)\n\narr = [3, 6, 8, 10, 1, 2, 1]\nsorted_arr = quicksort(arr)\nprint(sorted_arr)`,
-                changes_made: {
-                    base_case: "Modified the base case to handle empty arrays by checking if the length of the array is 0 or 1.",
-                    partition_logic: "Corrected the partitioning logic to append the current element 'i' to the left or right list instead of the pivot."
-                },
-                bugs_fixed: [1, 2],
-                new_dependencies: null,
-                tests_performed: [
-                    "Tested with an empty array to ensure it returns an empty array.",
-                    "Tested with various arrays, including those with duplicate elements, to ensure correct sorting."
-                ],
-                performance_improvements: null,
-                remaining_issues: null,
-                code_quality_metrics: null,
-                documentation_updates: null
-            });
-        }, 2000);
-    });
+const axiosInstance = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    headers: {
+        "Content-Type": "application/json",
+        "api-key": process.env.NEXT_PUBLIC_API_KEY,
+    },
+});
+
+async function fetchDebuggingData(data: DebuggingFormValues): Promise<any> {
+    try {
+        const response = await axiosInstance.post<any>("/multi-agent-debugging-assistant", data);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching debugging data:", error);
+        toast.error("Error during debugging. Please try again.");
+        return null;
+    }
 }
 
 export default function DebuggingForm() {
@@ -41,10 +37,10 @@ export default function DebuggingForm() {
     });
     const [debuggingData, setDebuggingData] = useState<any | null>(null);
 
-    const onSubmit = async (data: DebuggingFormValues) => {
+    const onSubmit: SubmitHandler<DebuggingFormValues> = async (data) => {
         toast.info("Submitting for multi-agent debugging...");
         const result = await fetchDebuggingData(data);
-        setDebuggingData(result);
+        if (result) setDebuggingData(result);
     };
 
     return (
