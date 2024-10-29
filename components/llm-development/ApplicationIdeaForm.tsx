@@ -1,5 +1,5 @@
 import { useState, Suspense } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { applicationIdeaSchema, ApplicationIdeaFormValues } from "@/schemas/ApplicationIdeaSchema";
 import { motion } from "framer-motion";
@@ -9,41 +9,25 @@ import { BiCodeAlt, BiCommentDetail } from "react-icons/bi";
 import "react-toastify/dist/ReactToastify.css";
 import ApplicationIdeaResult from "./ApplicationIdeaResult";
 import CircularSpinner from "../Spinner";
+import axios from "axios";
 
-function fetchApplicationIdea(data: ApplicationIdeaFormValues) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        feasibility: {
-          technical_feasibility: "The use of HuggingFace Transformers for text generation and sentiment analysis is technically feasible given its widespread adoption in NLP tasks. FastAPI is suitable for deploying the model due to its efficiency and ease of use.",
-          budget_feasibility: "The project budget of $5000 is reasonable for leveraging pre-trained models and existing frameworks like FastAPI, assuming minimal additional computational resources are required."
-        },
-        design_architecture: {
-          model_architecture: "The architecture will involve a pre-trained transformer model from HuggingFace for text generation and sentiment analysis. The model will be fine-tuned on specific datasets to improve performance.",
-          system_architecture: "The system will be a web-based application using FastAPI to handle API requests. The backend will process text inputs, generate outputs using the transformer model, and return results to the user."
-        },
-        recommended_tools: ["HuggingFace Transformers", "FastAPI", "PyTorch", "Pydantic", "OpenAPI"],
-        implementation_plan: {
-          phase_1: "Research and select appropriate pre-trained models from HuggingFace.",
-          phase_2: "Develop the API using FastAPI and integrate the model.",
-          phase_3: "Fine-tune the model on specific datasets for improved accuracy.",
-          phase_4: "Test the application for performance and accuracy.",
-          phase_5: "Deploy the application and monitor for any issues."
-        },
-        estimated_timeline: "2024-12-01",
-        estimated_cost: 5000,
-        potential_challenges: [
-          "Limited training data may affect model accuracy.",
-          "Low computational resources could slow down processing times.",
-          "Ensuring the model's outputs are unbiased and accurate."
-        ],
-        additional_notes: "Consider leveraging cloud services for additional computational resources if needed.",
-        resources: ["HuggingFace documentation", "FastAPI documentation", "PyTorch tutorials"],
-        contact_information: null,
-        legal_disclaimer: "Ensure compliance with data privacy laws and regulations when handling user data."
-      });
-    }, 2000);
-  });
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    "api-key": process.env.NEXT_PUBLIC_API_KEY,
+  },
+});
+
+async function fetchApplicationIdea(data: ApplicationIdeaFormValues): Promise<any> {
+  try {
+    const response = await axiosInstance.post<any>("/llm-app-development-assistant", data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching application idea:", error);
+    toast.error("Error submitting application idea. Please try again.");
+    return null;
+  }
 }
 
 export default function ApplicationIdeaForm() {
@@ -52,10 +36,10 @@ export default function ApplicationIdeaForm() {
   });
   const [ideaResult, setIdeaResult] = useState<any | null>(null);
 
-  const onSubmit = async (data: ApplicationIdeaFormValues) => {
+  const onSubmit: SubmitHandler<ApplicationIdeaFormValues> = async (data) => {
     toast.info("Submitting your application idea...");
     const result = await fetchApplicationIdea(data);
-    setIdeaResult(result);
+    if (result) setIdeaResult(result);
   };
 
   return (
