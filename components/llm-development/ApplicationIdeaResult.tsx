@@ -3,7 +3,7 @@ import { FaCheck, FaClipboardList } from "react-icons/fa";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 
 interface ApplicationIdeaResultProps {
-  data: any; 
+  data: any;
 }
 
 export default function ApplicationIdeaResult({ data }: ApplicationIdeaResultProps) {
@@ -13,8 +13,8 @@ export default function ApplicationIdeaResult({ data }: ApplicationIdeaResultPro
   const formatDataAsText = (obj: any): string => {
     const jsonString = JSON.stringify(obj, null, 2);
     return jsonString.replace(/[{}"]/g, "")  // Remove braces and quotes
-                     .replace(/,/g, "")      // Remove commas
-                     .replace(/:/g, ": ");   // Add space after colons
+      .replace(/,/g, "")      // Remove commas
+      .replace(/:/g, ": ");   // Add space after colons
   };
 
   const handleCopy = () => {
@@ -41,15 +41,19 @@ export default function ApplicationIdeaResult({ data }: ApplicationIdeaResultPro
 
       <div className="mb-4">
         <h3 className="font-semibold">Feasibility</h3>
-        <p><strong>Technical Feasibility:</strong> {data.feasibility.technical_feasibility}</p>
-        <p><strong>Budget Feasibility:</strong> {data.feasibility.budget_feasibility}</p>
+        <p><strong>Technical Feasibility:</strong> {data.feasibility.technical}</p>
+        <p><strong>Budget Feasibility:</strong> {data.feasibility.budget}</p>
       </div>
 
       <div className="mb-4">
         <h3 className="font-semibold">Design Architecture</h3>
-        <p><strong>Model Architecture:</strong> {data.design_architecture.model_architecture}</p>
-        <p><strong>System Architecture:</strong> {data.design_architecture.system_architecture}</p>
+        {Object.entries(data.design_architecture).map(([key, value]) => (
+          <p key={key}>
+            <strong className="capitalize">{key}:</strong> {String(value)}
+          </p>
+        ))}
       </div>
+
 
       <div className="mb-4">
         <h3 className="font-semibold">Recommended Tools</h3>
