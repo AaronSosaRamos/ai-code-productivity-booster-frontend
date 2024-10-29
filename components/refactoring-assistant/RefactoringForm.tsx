@@ -2,38 +2,47 @@ import { Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { FiSend, FiLoader } from "react-icons/fi";
 import { BiCodeAlt, BiCommentDetail } from "react-icons/bi";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CircularSpinner from "../Spinner";
 import CodeRefactorResults from "./CodeAnalysisResults";
 import { FaCogs } from "react-icons/fa";
+import axios from "axios";
 
-function fetchRefactorData(data: any) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        code_snippet: `def quicksort(arr):\n    if len(arr) <= 1:\n        return arr  # Corrected to handle empty arrays as well\n    pivot = arr[0]\n    left = [x for x in arr[1:] if x < pivot]  # Corrected logic and used list comprehension\n    right = [x for x in arr[1:] if x >= pivot]  # Corrected logic and used list comprehension\n    return quicksort(left) + [pivot] + quicksort(right)\n\narr = [3, 6, 8, 10, 1, 2, 1]\nsorted_arr = quicksort(arr)\nprint(sorted_arr)`,
+interface RefactorFormData {
+  code_snippet: string;
+  language: string;
+  context?: string;
+}
 
-        changes_made: {
-          "1": "Added a check for an empty array at the beginning of the function to prevent potential crashes.",
-          "2": "Corrected the pivot selection and appending logic to ensure elements are correctly added to the left and right lists.",
-          "3": "Used list comprehensions to improve code readability and efficiency."
-        },
-        new_dependencies: null
-      });
-    }, 2000);
-  });
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+    "api-key": process.env.NEXT_PUBLIC_API_KEY,
+  },
+});
+
+async function fetchRefactorData(data: RefactorFormData): Promise<any> {
+  try {
+    const response = await axiosInstance.post<any>("/refactoring-assistant", data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching refactor data:", error);
+    toast.error("Error processing refactoring data. Please try again.");
+    return null;
+  }
 }
 
 export default function RefactorAssistant() {
   const [refactorData, setRefactorData] = useState<any | null>(null);
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm();
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<RefactorFormData>();
 
-  const onSubmit = async (data: any) => {
+  const onSubmit: SubmitHandler<RefactorFormData> = async (data) => {
     toast.info("Processing refactoring...");
     const result = await fetchRefactorData(data);
-    setRefactorData(result);
+    if (result) setRefactorData(result);
   };
 
   return (
@@ -58,14 +67,12 @@ export default function RefactorAssistant() {
               <BiCodeAlt className="text-xl" /> Code Snippet
             </label>
             <textarea
-              {...register("code_snippet")}
+              {...register("code_snippet", { required: "Code snippet is required" })}
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring focus:ring-blue-500 dark:focus:ring-blue-400 transition text-black dark:text-white bg-white dark:bg-gray-700"
               rows={6}
               placeholder="Insert code here..."
             ></textarea>
-            {errors.code_snippet && typeof errors.code_snippet.message === "string" && (
-              <p className="text-red-500 text-sm mt-1">{errors.code_snippet.message}</p>
-            )}
+            {errors.code_snippet && <p className="text-red-500 text-sm mt-1">{errors.code_snippet.message}</p>}
           </div>
 
           <div>
@@ -73,7 +80,7 @@ export default function RefactorAssistant() {
               <BiCommentDetail className="text-xl" /> Language
             </label>
             <select
-              {...register("language")}
+              {...register("language", { required: "Please select a language" })}
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring focus:ring-blue-500 dark:focus:ring-blue-400 transition text-black dark:text-white bg-white dark:bg-gray-700"
               defaultValue="python"
             >
@@ -82,6 +89,7 @@ export default function RefactorAssistant() {
               <option value="typescript">TypeScript</option>
               <option value="java">Java</option>
             </select>
+            {errors.language && <p className="text-red-500 text-sm mt-1">{errors.language.message}</p>}
           </div>
 
           <div>
@@ -94,9 +102,6 @@ export default function RefactorAssistant() {
               rows={4}
               placeholder="Add additional context..."
             ></textarea>
-            {errors.context && typeof errors.context.message === "string" && (
-              <p className="text-red-500 text-sm mt-1">{errors.context.message}</p>
-            )}
           </div>
 
           <motion.button
